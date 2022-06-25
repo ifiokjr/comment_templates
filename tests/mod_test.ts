@@ -1,4 +1,4 @@
-import { CommentTemplateError, inlineCode, markdownTemplate } from "../mod.ts";
+import { CommentTemplateError, markdownTemplate } from "../mod.ts";
 import { assertThrows, describe, it } from "./deps.ts";
 import { snapshot } from "./helpers.ts";
 
@@ -10,6 +10,7 @@ describe("markdownTemplate", () => {
       content,
       variables: { name: "a new header" },
     });
+
     await snapshot(t, transformed);
   });
 
@@ -67,18 +68,100 @@ describe("markdownTemplate", () => {
     await snapshot(t, transformed);
   });
 
-  it.only("should support function variables", async (t) => {
+  it("should support function variables", async (t) => {
     const content =
-      `# <!-- ={name} --><!-- {/name} -->\n\nAnd some other <!-- ={adjective} --><!-- {/adjective} -->content\n  this is a <!-- ={size|inlineCode|suffix:" as code"} -->replace me<!-- {/size} -->.`;
+      `# <!-- ={name} --><!-- {/name} -->\n\nAnd some other <!-- ={adjective} --><!-- {/adjective} -->content\n  this is a <!-- ={size|code:|suffix:" as code"} -->replace me<!-- {/size} -->.`;
     const transformed = markdownTemplate({
       content,
       variables: {
         name: "a new header",
         adjective: "awesome",
-        size: "replace me",
+        size: (value = "") => `${value.split("").reverse().join("")}`,
       },
     });
 
     await snapshot(t, transformed);
+  });
+
+  describe("pipes", () => {
+    it("string:false", async (t) => {
+      const content = `<!-- ={test|string:false} --><!-- {/test} -->`;
+      const transformed = markdownTemplate({
+        content,
+        variables: { test: "a good test" },
+      });
+
+      await snapshot(t, transformed);
+    });
+
+    it("string:true", async (t) => {
+      const content = `<!-- ={test|string:true} --><!-- {/test} -->`;
+      const transformed = markdownTemplate({
+        content,
+        variables: { test: "a good test" },
+      });
+
+      await snapshot(t, transformed);
+    });
+
+    it("prefix", async (t) => {
+      const content = `<!-- ={test|prefix:"not "} --><!-- {/test} -->`;
+      const transformed = markdownTemplate({
+        content,
+        variables: { test: "a good test" },
+      });
+
+      await snapshot(t, transformed);
+    });
+
+    it("suffix", async (t) => {
+      const content = `<!-- ={test|suffix:", okay..."} --><!-- {/test} -->`;
+      const transformed = markdownTemplate({
+        content,
+        variables: { test: "a good test" },
+      });
+
+      await snapshot(t, transformed);
+    });
+
+    it("codeblock", async (t) => {
+      const content = `<!-- ={test|codeblock:""} --><!-- {/test} -->`;
+      const transformed = markdownTemplate({
+        content,
+        variables: { test: "a good test" },
+      });
+
+      await snapshot(t, transformed);
+    });
+
+    it("indent", async (t) => {
+      const content = `<!-- ={test|indent:"  "} --><!-- {/test} -->`;
+      const transformed = markdownTemplate({
+        content,
+        variables: { test: "a good test" },
+      });
+
+      await snapshot(t, transformed);
+    });
+
+    it("code", async (t) => {
+      const content = `<!-- ={test|code:} --><!-- {/test} -->`;
+      const transformed = markdownTemplate({
+        content,
+        variables: { test: "a good test" },
+      });
+
+      await snapshot(t, transformed);
+    });
+
+    it("replace", async (t) => {
+      const content = `<!-- ={test|replace:"<!--,other"} --><!-- {/test} -->`;
+      const transformed = markdownTemplate({
+        content,
+        variables: { test: "<!-- Hello -->" },
+      });
+
+      await snapshot(t, transformed);
+    });
   });
 });

@@ -18,7 +18,7 @@
  * sure the content is properly wrapped as a codeblock.
  *
  * ```md
- * <!-- ={sample|codeBlock:"tsx"} -->|<!-- {/sample} -->
+ * <!-- ={sample|codeblock:"tsx"} -->|<!-- {/sample} -->
  * ```
  *
  * The above would transform the variable value of sample into a codeblock with
@@ -30,31 +30,36 @@
  * - Multiple pipes can be applied to a single value.
  *
  * ```md
- * <!-- ={sample|prefix:"This is a prefix"|codeBlock:"tsx"|suffix:"This is a suffix"} --><!-- {/sample} -->
+ * <!-- ={sample|prefix:"This is a prefix"|codeblock:"tsx"|suffix:"This is a suffix"} --><!-- {/sample} -->
  * ```
  *
  * The supported pipe names are.
  *
- * - `string`: `|string` will wrap the value in quotes.
+ * - `string`: `|string:true` will wrap the value in quotes.
  * - `prefix`: `|prefix:"prefix"` will prefix the value with the provided
  *   string.
  * - `suffix`: `|suffix:"suffix"` will suffix the value with the provided
  *   string.
- * - `codeBlock`: `|codeBlock:"language"` will wrap the value in a codeblock
+ * - `codeblock`: `|codeblock:"language"` will wrap the value in a codeblock
  *   with the provided language and set the indentation.
  * - `indent`: `|indent:"  "` will indent each line by the provided string. This
  *   can be used to provide custom prefixes like `|indent:" * "` to
- * - `inlineCode`: `|inlineCode` will wrap the value in inline code `\``
- *   backticks.
- * - `replace`: `|replace:"search":"replace"` will replace the search string.
+ * - `code`: `|code:null` will wrap the value in inline code `\`` backticks.
+ * - `replace`: `|replace:"search,replace"` will replace the search string with
+ *   the replacement where the `,` is used to split the string.
  *
  * The supported pipe arguments are `true`, `false`, `null`, any number
  * `0123456789_` and any string wrapped in double quotes `"string"`
  *
+ * **NOTE**: The pipe arguments are not processed with regex and at the moment
+ * the regex is timing out when a single pipe is used without arguments. In
+ * order to use a single pipe, please provide an argument, even if it is an
+ * empty string.
+ *
  * ### Examples
  *
  * ```ts
- * import { markdownTemplate, inlineCode } from 'https://deno.land/x/markdown_template/mod.ts';
+ * import { markdownTemplate, code } from 'https://deno.land/x/markdown_template/mod.ts';
  * const version = '@2.1.0';
  * const name = 'comment_templates';
  * const fileUrl = new URL('readme.md', import.meta.url);
@@ -72,7 +77,7 @@
  * **Before:** `readme.md`
  *
  * ```md
- * # <!-- ={name} --><!-- {/name} --><!-- ={version|inlineCode} --><!-- {/version} -->
+ * # <!-- ={name} --><!-- {/name} --><!-- ={version|code} --><!-- {/version} -->
  * ```
  *
  * **After:** `readme.md`
@@ -154,7 +159,7 @@ const pipes = {
     (value: string) => {
       return `${value}${suffix}`;
     },
-  codeBlock:
+  codeblock:
     (language = '') =>
     (value: string) => {
       return `\`\`\`${language}\n${value}\n\`\`\``;
@@ -167,14 +172,15 @@ const pipes = {
         .map((line) => `${indent}${line}`)
         .join('\n');
     },
-  inlineCode: () => (value: string) => {
+  code: () => (value: string) => {
     return `\`${value}\``;
   },
-  replace:
-    (search = '', replace = '') =>
-    (value: string) => {
+  replace: (value = '') => {
+    const [search = '', replace = ''] = value.split(',');
+    return (value: string) => {
       return value.replaceAll(search, replace);
-    },
+    };
+  },
 };
 
 type Piper = (value: string) => string;
@@ -222,7 +228,6 @@ function createPiper(pipeString: string | undefined): Piper {
   if (!pipeString) {
     return combine(...fns);
   }
-
 
   let index = 0;
   const tokens: Token[] = [];
@@ -285,10 +290,8 @@ function createPiper(pipeString: string | undefined): Piper {
   }
 
   let args: ArgToken['value'][] = [];
-  let fn:
-    // deno-lint-ignore no-explicit-any
-    | ((...args: any[]) => Piper)
-    | undefined;
+  let fn: // deno-lint-ignore no-explicit-any
+  ((...args: any[]) => Piper) | undefined;
 
   for (const token of tokens) {
     if (token.type === 'arg') {
@@ -313,48 +316,11 @@ function createPiper(pipeString: string | undefined): Piper {
     fns.push(fn(...args));
   }
 
-  return combine(...fns)
+  return combine(...fns);
 }
 
 function isPipeName(value: string): value is keyof typeof pipes {
   return Object.keys(pipes).includes(value);
-}
-
-/**
- * Wrap a string in inline code ticks.
- */
-export function inlineCode(code: string): string {
-  return /^`.+`$/g.test(code) || !code ? code : `\`${code}\``;
-}
-
-interface CodeBlockOptions {
-  /**
-   * The language specifier for the code block.
-   *
-   * @default ''
-   */
-  language?: string;
-
-  /**
-   * The indentation level of the code block.
-   */
-  indentation?: string;
-}
-
-/**
- * Wrap the code in a codeblock. This makes it easier to manager the language
- * and the indentation.
- *
- * @param code the code to wrap
- * @param options the options for the codeblock
- */
-export function codeBlock(code: string, options?: CodeBlockOptions): string {
-  const { indentation = '', language = '' } = options ?? {};
-  return /^```.+``$/g.test(code.trim()) || !code
-    ? code
-    : `${indentation}\`\`\`${language.trim()}\n${code
-        .split('\n')
-        .join(`\n${indentation}`)}\n${indentation}\`\`\``;
 }
 
 /**
@@ -374,9 +340,11 @@ export function codeBlock(code: string, options?: CodeBlockOptions): string {
  *   provided it will be called with the value.
  */
 const XML_COMMENT_VARIABLE =
-  /(?<open><!--\s*=\{(?<name>[a-z_A-Z0-9$]+)(?<pipes>(?:\|[a-z_A-Z0-9$]+(?::(?:null|true|false|[0-9_\.]+|"[^*]*))*)*)\}\s*-->)(?<value>.*)(?<close><!--\s*\{\/\k<name>\}\s*-->)/gm;
+  /(?<open><!--\s*=\{(?<name>[a-z_A-Z0-9$]+)(?<pipes>(?:\|[a-z_A-Z0-9$]+(?::(?:null|true|false|[0-9_\.]+|"[^"]*")*))*)\}\s*-->)(?<value>.*)(?<close><!--\s*\{\/\k<name>\}\s*-->)/gm;
 const SLASH_COMMENT_VARIABLE =
-  /(?<open>\/\*\s*=\{(?<name>[a-z_A-Z0-9$]+)(?<pipes>(?:\|[a-z_A-Z0-9$]+(?::(?:null|true|false|[0-9_\.]+|"[^*]*))*)*)\}\s*\*\\)(?<value>.*)(?<close>\/\*\s*\{\/\k<name>\}\s*\*\\)/gm;
+  /(?<open>\/\*\s*=\{(?<name>[a-z_A-Z0-9$]+)(?<pipes>(?:\|[a-z_A-Z0-9$]+(?::(?:null|true|false|[0-9_\.]+|"[^"]*")))*)\}\s*\*\\)(?<value>.*)(?<close>\/\*\s*\{\/\k<name>\}\s*\*\\)/gm;
+
+//(?:string|prefix|suffix|codeblock|indent|code|replace)
 
 const PATTERNS = {
   /**

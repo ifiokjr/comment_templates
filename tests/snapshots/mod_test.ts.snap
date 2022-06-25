@@ -33,5 +33,25 @@ snapshot[`markdownTemplate > should support function variables 1`] = `
 # <!-- ={name} -->a new header<!-- {/name} -->
 
 And some other <!-- ={adjective} -->awesome<!-- {/adjective} -->content
-  this is a <!-- ={size} -->\`replace me as code\`<!-- {/size} -->.
+  this is a <!-- ={size|code:|suffix:" as code"} -->\`em ecalper\`<!-- {/size} -->.
 `;
+
+snapshot[`markdownTemplate > pipes > string:false 1`] = `<!-- ={test|string:false} -->"a good test"<!-- {/test} -->`;
+
+snapshot[`markdownTemplate > pipes > string:true 1`] = `<!-- ={test|string:true} -->'a good test'<!-- {/test} -->`;
+
+snapshot[`markdownTemplate > pipes > prefix 1`] = `<!-- ={test|prefix:"not "} -->not a good test<!-- {/test} -->`;
+
+snapshot[`markdownTemplate > pipes > suffix 1`] = `<!-- ={test|suffix:", okay..."} -->a good test, okay...<!-- {/test} -->`;
+
+snapshot[`markdownTemplate > pipes > codeblock 1`] = `
+<!-- ={test|codeblock:""} -->\`\`\`
+a good test
+\`\`\`<!-- {/test} -->
+`;
+
+snapshot[`markdownTemplate > pipes > indent 1`] = `<!-- ={test|indent:"  "} -->  a good test<!-- {/test} -->`;
+
+snapshot[`markdownTemplate > pipes > code 1`] = `<!-- ={test|code:} -->\`a good test\`<!-- {/test} -->`;
+
+snapshot[`markdownTemplate > pipes > replace 1`] = `<!-- ={test|replace:"<!--,other"} -->other Hello --><!-- {/test} -->`;
