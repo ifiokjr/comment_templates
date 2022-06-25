@@ -1,0 +1,38 @@
+{
+	"tasks": {
+		/** Run all tests.
+    - To update snapshots use `deno task test -- -u`
+    - To specify the test file / folder use `deno task test test.ts`
+    */
+		"test": "deno test --allow-read='./tests' --allow-write='./tests/snapshots'",
+		/** Run all tests in watch mode.
+    - To update snapshots use `deno task test:watch -- -u`
+    - To specify the test file / folder use `deno task test:watch test.ts`
+    */
+		"test:watch": "deno test --allow-read='./tests' --allow-write='./tests/snapshots' --watch"
+	},
+	"compilerOptions": { "noUncheckedIndexedAccess": true },
+	"lint": {
+		"files": {
+			"include": ["./"]
+		},
+		"rules": {
+			"tags": ["recommended"],
+			"exclude": ["ban-types"],
+			"include": [
+				"ban-untagged-todo",
+				"camelcase",
+				"default-param-last",
+				"explicit-module-boundary-types",
+				"eqeqeq",
+				"no-await-in-loop",
+				"no-eval",
+				"no-sparse-arrays",
+				"no-throw-literal",
+				"prefer-ascii",
+				"single-var-declarator",
+				"triple-slash-reference"
+			]
+		}
+	}
+}

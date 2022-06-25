@@ -1,0 +1,37 @@
+export const snapshot = {};
+
+snapshot[`markdownTemplate > should transform basic content 1`] = `
+# <!-- ={name} -->a new header<!-- {/name} -->
+
+And some other content
+`;
+
+snapshot[`markdownTemplate > should handle multiple transformations 1`] = `
+# <!-- ={name} -->a new header<!-- {/name} -->
+
+And some other <!-- ={adjective} -->awesome<!-- {/adjective} -->content
+  this is a <!-- ={size} -->large<!-- {/size} -->.
+`;
+
+snapshot[`markdownTemplate > should skip content when no variable defined 1`] = `
+# <!-- ={name} -->a new header<!-- {/name} -->
+
+And some other <!-- ={adjective} -->awesome<!-- {/adjective} -->content
+  this is a <!-- ={size} -->replace me<!-- {/size} -->.
+`;
+
+snapshot[`markdownTemplate > should support multiline comments 1`] = `
+# <!-- 
+={name} -->a new header<!-- {/name} -->
+
+And some other <!-- ={adjective}
+ -->awesome<!--         {/adjective} -->content
+  this is a <!-- ={size} -->small<!-- {/size} -->.
+`;
+
+snapshot[`markdownTemplate > should support function variables 1`] = `
+# <!-- ={name} -->a new header<!-- {/name} -->
+
+And some other <!-- ={adjective} -->awesome<!-- {/adjective} -->content
+  this is a <!-- ={size} -->\`replace me as code\`<!-- {/size} -->.
+`;
