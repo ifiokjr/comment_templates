@@ -66,7 +66,7 @@
  *
  * ```ts
  * import { assertEquals } from './tests/deps.ts';
- * import { commentTemplate } from 'https://deno.land/x/comment-templates@0.1.0/mod.ts';
+ * import { commentTemplate } from 'https://deno.land/x/comment-templates@0.0.0/mod.ts';
  *
  * const exampleVersion = '2.1.0';
  * const exampleName = 'Comment Template!';
@@ -366,9 +366,9 @@ function isPipeName(value: string): value is keyof typeof pipes {
  *   provided it will be called with the value.
  */
 const XML_COMMENT_VARIABLE =
-  /(?<open><!--\s*=\{(?<name>[a-z_A-Z0-9$]+)(?<pipes>(?:\|[a-z_A-Z0-9$]+(?::(?:null|true|false|[0-9_\.]+|"[^"]*")*))*)\}\s*-->)(?<value>.*)(?<close><!--\s*\{\/\k<name>\}\s*-->)/gms;
+  /(?<open><!--\s*=\{(?<name>[a-z_A-Z$][a-z_A-Z0-9$\.]*)(?<pipes>(?:\|[a-z_A-Z0-9$]+(?::(?:null|true|false|[0-9_\.]+|"[^"]*")*))*)\}\s*-->)(?<value>.*)(?<close><!--\s*\{\/\k<name>\}\s*-->)/gms;
 const SLASH_COMMENT_VARIABLE =
-  /(?<open>\/\*\s*=\{(?<name>[a-z_A-Z0-9$]+)(?<pipes>(?:\|[a-z_A-Z0-9$]+(?::(?:null|true|false|[0-9_\.]+|"[^"]*")))*)\}\s*\*\\)(?<value>.*)(?<close>\/\*\s*\{\/\k<name>\}\s*\*\\)/gms;
+  /(?<open>\/\*\s*=\{(?<name>[a-z_A-Z$][a-z_A-Z0-9$\.]*)(?<pipes>(?:\|[a-z_A-Z0-9$]+(?::(?:null|true|false|[0-9_\.]+|"[^"]*")))*)\}\s*\*\\)(?<value>.*)(?<close>\/\*\s*\{\/\k<name>\}\s*\*\\)/gms;
 
 // (?:string|prefix|suffix|codeblock|indent|code|replace)
 
@@ -441,7 +441,7 @@ export interface CommentTemplateProps {
    * import {
    *   commentTemplate,
    *   type CommentTemplateProps
-   * } from 'https://deno.land/x/comment-templates@0.1.0/mod.ts';
+   * } from 'https://deno.land/x/comment-templates@0.0.0/mod.ts';
    *
    * const props: CommentTemplateProps = {
    *   content: await Deno.readTextFile(new URL('tests/fixtures/sample.md', import.meta.url)),
@@ -469,7 +469,7 @@ export interface CommentTemplateProps {
    * ```ts
    * import {
    *   type CommentTemplateProps
-   * } from 'https://deno.land/x/comment-templates@0.1.0/mod.ts';
+   * } from 'https://deno.land/x/comment-templates@0.0.0/mod.ts';
    *
    * const props: CommentTemplateProps = {
    *   content: await Deno.readTextFile(new URL('tests/fixtures/sample.md', import.meta.url)),
@@ -495,11 +495,11 @@ export interface CommentTemplateProps {
    * the `throwIfMissingVariable` is set to `true`.
    *
    * ```ts
-   * import { assertThrows } from 'https://deno.land/x/comment-templates@0.1.0/tests/deps.ts'
+   * import { assertThrows } from 'https://deno.land/x/comment-templates@0.0.0/tests/deps.ts'
    * import {
    *   commentTemplate,
    *   type CommentTemplateProps
-   * } from 'https://deno.land/x/comment-templates@0.1.0/mod.ts';
+   * } from 'https://deno.land/x/comment-templates@0.0.0/mod.ts';
    *
    * const props: CommentTemplateProps = {
    *   content: `<!-- ={nonExistent} --><!-- {/nonExistent} -->`,
@@ -525,12 +525,12 @@ export interface CommentTemplateProps {
    * ### Examples
    *
    * ```ts
-   * import { type CommentTemplateProps } from 'https://deno.land/x/comment-templates@0.1.0/mod.ts';
+   * import { type CommentTemplateProps } from 'https://deno.land/x/comment-templates@0.0.0/mod.ts';
    *
    * const props: CommentTemplateProps = {
    *   content: `<!-- ={nonExistent} --><!-- {/nonExistent} -->`,
    *   variables: { name: 'Deno' },
-   *   patterns: ['html'], // limit to markdown files
+   *   patterns: ['xml'], // limit to markdown files
    * };
    * ```
    */
@@ -544,11 +544,11 @@ export interface CommentTemplateProps {
    * The following example excludes a match based on the provided name.
    *
    * ```ts
-   * import { CommentTemplateProps } from 'https://deno.land/x/comment-templates@0.1.0/mod.ts';
+   * import { CommentTemplateProps } from 'https://deno.land/x/comment-templates@0.0.0/mod.ts';
    *
    * const props: CommentTemplateProps = {
    *  content: '<!-- ={excludedName} --><!-- {/excludedName} -->',
-   *  variables: {}
+   *  variables: {},
    *  exclude: ({ name }) => name.startsWith('excluded')
    * }
    * ```
@@ -585,13 +585,13 @@ interface ExcludeDetails {
    * The following excludes a match based on the provided name.
    *
    * ```ts
-   * import { CommentTemplateProps } from 'https://deno.land/x/comment-templates@0.1.0/mod.ts';
+   * import { CommentTemplateProps } from 'https://deno.land/x/comment-templates@0.0.0/mod.ts';
    *
    * const props: CommentTemplateProps = {
    *  content: '<!-- ={excludedName} --><!-- {/excludedName} -->',
-   *  variables: {}
-   *  exclude: ({ name }) => name.startsWith('excluded')
-   * }
+   *  variables: {},
+   *  exclude: ({ name }) => name.startsWith('excluded'),
+   * };
    * ```
    */
   name: string;
@@ -630,11 +630,11 @@ function entries<
 }
 
 /**
- * Extract the snippets from the provided content.
- *
- * This returns each named snippet in a map.
+ * <!-- ={modExtractTemplateValues|prefix:"\n"|indent:" * "|suffix:"\n * "} --><!-- {/name} -->
  */
-export function extractTemplateValues(content: string): ReadonlyMap<string, string> {
+export function extractTemplateValues(
+  content: string,
+): ReadonlyMap<string, string> {
   const items: Array<[name: string, value: string]> = [];
   const matches = content.matchAll(XML_COMMENT_SNIPPET);
 
@@ -644,15 +644,17 @@ export function extractTemplateValues(content: string): ReadonlyMap<string, stri
     const start = match.index;
     const length = full?.length;
 
-    if (!name || !open || !close || typeof start !== "number" || !length || !value) {
+    if (
+      !name || !open || !close || typeof start !== "number" || !length || !value
+    ) {
       continue;
     }
 
-    items.push([name, value.trim()])
+    items.push([name, value.trim()]);
   }
 
   return new Map(items);
 }
 
 const XML_COMMENT_SNIPPET =
-  /(?<open><!--\s*@\{(?<name>[a-z_A-Z0-9$]+)\}\s*-->)(?<value>.*)(?<close><!--\s*\{\/\k<name>\}\s*-->)/gms;
+  /(?<open><!--\s*@\{(?<name>[a-z_A-Z$][a-z_A-Z0-9$\.]*)\}\s*-->)(?<value>.*)(?<close><!--\s*\{\/\k<name>\}\s*-->)/gms;

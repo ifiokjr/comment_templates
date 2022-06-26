@@ -10,7 +10,7 @@
   "json": { "deno": true },
   "markdown": { "deno": true, "textWrap": "never" },
   "toml": {},
-  "includes": ["**/*.{ts,tsx,js,jsx,cjs,mjs,json,md,toml}"],
+  "includes": ["**/*.{ts,tsx,js,jsx,cjs,mjs,json,md,toml,d.md}"],
   "excludes": ["**/node_modules", "**/*-lock.json"],
   "plugins": [
     "https://plugins.dprint.dev/typescript-0.69.5.wasm",

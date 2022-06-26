@@ -59,3 +59,6 @@ jobs:
 
       - name: ✅ Unit test
         run: deno task test
+
+      - name: ✅ Test Docs
+        run: deno task test:docs

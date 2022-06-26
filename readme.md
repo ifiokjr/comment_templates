@@ -14,16 +14,3 @@ The solution is to wrap the content you want to replace in a language specific c
 ## API
 
 <!-- ={apiDocs} -->Docs go here<!-- ={/apiDocs}-->
-
-<code>this is <a>code</a></code>
-
-<div class="highlight highlight-source-ts">
-<pre>
-const <a>a</a> = b;
-</pre>
-</div>
-
-```ts
-commentTemplate("hello");
-throw new Error("wassup");
-```

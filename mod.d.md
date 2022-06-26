@@ -1,4 +1,4 @@
-<!-- @{exportCommentTemplate} -->
+<!-- @{modCommentTemplate} -->
 
 Provide a string which contains template tags (using html and slash comments) that should be replaced with the variables provided.
 
@@ -35,7 +35,7 @@ The supported pipe names are.
 - `prefix`: `|prefix:"prefix"` will prefix the value with the provided string.
 - `suffix`: `|suffix:"suffix"` will suffix the value with the provided string.
 - `codeblock`: `|codeblock:"language"` will wrap the value in a codeblock with the provided language and set the indentation.
-- `indent`: `|indent:"  "` will indent each line by the provided string. This can be used to provide custom prefixes like `|indent:" * "` to
+- `indent`: `|indent:" "` will indent each line by the provided string. This can be used to provide custom prefixes like `|indent:" * "` to
 - `code`: `|code:null` will wrap the value in inline code `\`` backticks.
 - `replace`: `|replace:"search,replace"` will replace the search string with the replacement where the `,` is used to split the string.
 
@@ -46,23 +46,25 @@ The supported pipe arguments are `true`, `false`, `null`, any number `0123456789
 ### Examples
 
 ```ts
-import { assertEquals } from './tests/deps.ts';
-import { commentTemplate } from 'https://deno.land/x/comment-templates@0.1.0/mod.ts';
+import {
+  commentTemplate,
+} from "https://deno.land/x/comment-templates@<%=it.version%>/mod.ts";
+import { assertEquals } from "./tests/deps.ts";
 
-const exampleVersion = '2.1.0';
-const exampleName = 'Comment Template!';
-const fileUrl = new URL('tests/fixtures/sample.md', import.meta.url);
+const exampleVersion = "2.1.0";
+const exampleName = "Comment Template!";
+const fileUrl = new URL("tests/fixtures/sample.md", import.meta.url);
 const content = await Deno.readTextFile(fileUrl);
 
 // Transform and use the variables in the content.
 const transformed = commentTemplate({
   content,
-  variables: { exampleVersion, exampleName }
+  variables: { exampleVersion, exampleName },
 });
 
 assertEquals(
   transformed,
->\`@2.1.0\`<!-- {/exampleVersion} -->\n`
+  `# <!-- ={exampleName} -->CommentTemplate!<!-- {/exampleName} --><!-- ={exampleVersion|prefix:"@"|code:null} -->\`@2.1.0\`<!-- {/exampleVersion} -->\n`,
 );
 ```
 
@@ -78,4 +80,26 @@ assertEquals(
 # <!-- ={name} -->package<!-- {/name} --><!-- ={version} -->`@2.1.0`<!-- {/version} -->
 ```
 
-<!-- {/snippetCommentTemplate} -->
+<!-- {/modCommentTemplate} -->
+
+<!-- ={modExtractTemplateValues} -->
+
+Extract the snippets from the provided content.
+
+This returns each named snippet in a map.
+
+### Examples
+
+The following example extracts the snippets from the provided content.
+
+```ts
+import {
+  extractTemplateValues,
+} from "https://deno.land/x/comment-templates@<%=it.version%>/mod.ts";
+
+const content = await Deno.readTextFile("./mod.d.md");
+const variables = extractTemplateValues(content);
+// => ReadonlyMap<string, string>
+```
+
+<!-- {/modExtractTemplateValues} -->
