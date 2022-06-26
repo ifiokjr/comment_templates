@@ -13,4 +13,214 @@ The solution is to wrap the content you want to replace in a language specific c
 
 ## API
 
-<!-- ={apiDocs} -->Docs go here<!-- ={/apiDocs}-->
+<!-- ={apiDocs} --><table><tr><td width="400px" valign="top">
+
+### `commentTemplate`
+
+```ts
+declare function commentTemplate(props: CommentTemplateProps): string;
+```
+
+Provide a string which contains template tags (using html and slash comments) that should be replaced with the variables provided.
+
+```md
+<!-- ={exampleName} -->Placeholder text<!-- {/exampleName} -->
+```
+
+The above code will replace `Placeholder text` with the value of the `name` variable.
+
+Unlike usual template formats, the wrapping comment tags are not not processed by the template engine. Only the wrapped content is replaced. This allows the template values to be updated continually.
+
+Since `html` comments don't work within markdown codeblocks you should pass the full codeblock as one of the variable values. You can use pipes to make sure the content is properly wrapped as a codeblock.
+
+```md
+<!-- ={sample|codeblock:"tsx"} -->|<!-- {/sample} -->
+```
+
+The above would transform the variable value of sample into a codeblock with the language `tsx`.
+
+- `|` is used to separate the pipes.
+- `:` is used to apply different arguments to the underlying pipe transformation.
+- Multiple pipes can be applied to a single value.
+
+```md
+<!-- ={examplePipe|prefix:"This is a prefix"|codeblock:"tsx"|suffix:"This is a suffix"} --><!-- {/examplePipe} -->
+```
+
+The supported pipe names are.
+
+- `trim`: `|trim:null` trim all whitespace from the start and end of the content.
+- `trimStart`: `|trim:null` trim all whitespace from the start of the content.
+- `trimEnd`: `|trim:null` trim all whitespace from the end of the content.
+- `string`: `|string:true` will wrap the value in single quotes. |string:false` will wrap the value in double quotes.
+- `prefix`: `|prefix:"prefix"` will prefix the value with the provided string.
+- `suffix`: `|suffix:"suffix"` will suffix the value with the provided string.
+- `codeblock`: `|codeblock:"language"` will wrap the value in a codeblock with the provided language and set the indentation.
+- `indent`: `|indent:"  "` will indent each line by the provided string. This can be used to provide custom prefixes like `|indent:" * "` to
+- `code`: `|code:null` will wrap the value in inline code `\`` backticks.
+- `replace`: `|replace:"search,replace"` will replace the search string with the replacement where the `,` is used to split the string.
+
+The supported pipe arguments are `true`, `false`, `null`, any number `0123456789_` and any string wrapped in double quotes `"string"`
+
+**NOTE**: The pipe arguments are not processed with regex and at the moment the regex is timing out when a single pipe is used without arguments. In order to use a single pipe, please provide an argument, even if it is an empty string.
+
+</td><td width="600px"><br>
+
+```ts
+import { commentTemplate } from "https://deno.land/x/comment-templates@0.0.0/mod.ts";
+import { assertEquals } from "./tests/deps.ts";
+
+const exampleVersion = "2.1.0";
+const exampleName = "Comment Template!";
+const fileUrl = new URL("tests/fixtures/sample.md", import.meta.url);
+const content = await Deno.readTextFile(fileUrl);
+
+// Transform and use the variables in the content.
+const transformed = commentTemplate({
+  content,
+  variables: { exampleVersion, exampleName },
+});
+
+assertEquals(
+  transformed,
+  `# <!-- ={exampleName} -->CommentTemplate!<!-- {/exampleName} --><!-- ={exampleVersion|prefix:"@"|code:null} -->\`@2.1.0\`<!-- {/exampleVersion} -->\n`,
+);
+```
+
+**Before:** `readme.md`
+
+```md
+# <!-- ={name} --><!-- {/name} --><!-- ={version|prefix:"@"|code:null} --><!-- {/version} -->
+```
+
+**After:** `readme.md`
+
+```md
+# <!-- ={name} -->package<!-- {/name} --><!-- ={version} -->`@2.1.0`<!-- {/version} -->
+```
+
+</td></tr></table>
+
+<table><tr><td width="400px" valign="top">
+
+### `CommentTemplateProps`
+
+<br />
+
+```ts
+interface CommentTemplateProps {
+  content: string;
+  variables: CommentTemplateVariables;
+  throwIfMissingVariable?: boolean;
+  patterns?: Pattern[];
+  exclude?: Exclude;
+}
+```
+
+<br />
+These are the props that are passed into the `commentTemplate` function.
+
+**content**: `string`
+
+This is the content to transform and is required.
+
+**variables**: `CommentTemplateVariables`
+
+Pass variables to the template which replace the content.
+
+If a function is provided it is called with the current value, which can be `undefined`. Variables must be a flat object structure and cannot contain nested objects.
+
+There is currently no support for nesting.
+
+**throwIfMissingVariable**: _(optional)_ `boolean`
+
+Throw an error if a variable is not found. This can be useful for making sure out of date comments don't clutter up your markdown and Typescript files.
+
+**patterns**: _(optional)_ `Pattern[]`
+
+The comment patterns to match for the provided content. You can limit the kind of comments that this function will transform.
+
+- `html` will be able to transform markdown files with comments.
+- `slash` will be able to transform languages with `slash star` comments like JavaScript and TypeScript.
+
+**exclude**: _(optional)_ `Exclude`
+
+Return true when you want to exclude a match from being transformed.
+
+</td><td width="600px"><br>
+
+**content**
+
+The `content` can be pulled in from a file and then written back to the same file. All non-related content will be preserved.
+
+```ts
+import {
+  commentTemplate,
+  type CommentTemplateProps,
+} from "https://deno.land/x/comment-templates@0.0.0/mod.ts";
+
+const props: CommentTemplateProps = {
+  content: await Deno.readTextFile(
+    new URL("tests/fixtures/sample.md", import.meta.url),
+  ),
+  variables: { name: "Deno" },
+};
+
+const transformedContent = commentTemplate(props);
+```
+
+**variables**
+
+Here is an example of creating variables with both a function and a string.
+
+```ts
+import {
+  type CommentTemplateProps,
+} from "https://deno.land/x/comment-templates@0.0.0/mod.ts";
+
+const props: CommentTemplateProps = {
+  content: await Deno.readTextFile(
+    new URL("tests/fixtures/sample.md", import.meta.url),
+  ),
+  variables: {
+    simple: "a simple string",
+    complex: (value) => value ? `${value} is complex` : "seems undefined",
+  },
+};
+```
+
+**exclude**
+
+The following example excludes a match based on the provided name.
+
+```ts
+import { CommentTemplateProps } from "https://deno.land/x/comment-templates@0.0.0/mod.ts";
+
+const props: CommentTemplateProps = {
+  content: "<!-- ={excludedName} --><!-- {/excludedName} -->",
+  variables: {},
+  exclude: ({ name }) => name.startsWith("excluded"),
+};
+```
+
+</td></tr></table>
+
+<table><tr><td width="400px" valign="top">
+
+### `extractTemplateValues`
+
+```ts
+declare function extractTemplateValues(
+  content: string,
+): ReadonlyMap<string, string>;
+```
+
+<br />
+<!-- ={modExtractTemplateValues|prefix:"\n"|indent:" * "|suffix:"\n * "} --><!-- {/name} -->
+
+</td><td width="600px"><br>
+
+</td></tr></table>
+<!-- {/apiDocs}-->
+
+hello

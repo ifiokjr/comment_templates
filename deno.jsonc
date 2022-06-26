@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "docs": "deno run -A scripts/docs.ts",
+    "docs": "deno run -A scripts/docs/populate.ts && dprint fmt",
     "docs:watch": "deno run --watch -A scripts/docs.ts",
     "test": "deno test --allow-read='./tests' --allow-write='./tests/snapshots'",
     "test:docs": "deno run -A ./scripts/test_with_import_map.ts",

@@ -6,11 +6,10 @@ import {
   ParamDef,
   TsTypeDef,
   TsTypeParamDef,
-} from "./deps.ts";
+} from "../deps.ts";
 
-export async function run(): Promise<string> {
-  const mainUrl = new URL("../mod.ts", import.meta.url);
-  const nodes = await doc(mainUrl.href, {});
+export async function generateApi(url: URL): Promise<string> {
+  const nodes = await doc(url.href, {});
   const entries: string[] = [];
 
   for (const node of nodes) {
@@ -19,7 +18,7 @@ export async function run(): Promise<string> {
         node.jsDoc?.doc?.split("### Examples") ?? [];
       const entry = createMarkdownEntry({
         name: node.name,
-        signature: createFunctionSignature(node.functionDef),
+        signature: createFunctionSignature(node.name, node.functionDef),
         description,
         examples,
       });
@@ -60,7 +59,6 @@ function extractInterfaceDocs(node: DocNodeInterface): string {
     }
 
     if (signature.tsType) {
-      console.log(signature.tsType);
       value += `: ${extractTsType(signature.tsType)}`;
     } else {
       value += ": any";
@@ -79,17 +77,16 @@ function extractInterfaceDocs(node: DocNodeInterface): string {
         extractTypeParams(property.typeParams, ["<", ">"])
       }`
       : `any`;
-    console.log(getDefaultJsDocValue(property.jsDoc?.tags));
     const signature = `${property.readonly ? "readonly " : ""}${property.name}${
       property.optional ? "?" : ""
     }: ${typeSignature};`;
-    const propertyDescription = `**${property.name}**:${
+    const propertyDescription = `\n\n**${property.name}**:${
       property.optional ? " _(optional)_" : ""
     } \`${property.readonly ? "readonly " : ""}${typeSignature}\`\n\n${
       doc.description ? `${doc.description}\n\n` : ""
     }`;
     const propertyExample = doc.examples
-      ? `**${property.name}**\n\n${doc.examples}`
+      ? `\n\n**${property.name}**\n\n${doc.examples}`
       : "";
 
     description += propertyDescription;
@@ -108,7 +105,6 @@ function extractInterfaceDocs(node: DocNodeInterface): string {
     examples,
   });
 
-  // console.log(value);
   return value;
 }
 
@@ -117,8 +113,8 @@ function getExamplesAndDescription(doc: string) {
   return { description, examples };
 }
 
+// deno-lint-ignore no-unused-vars
 function getDefaultJsDocValue(tags: JsDocTag[] | undefined) {
-  console.log(tags);
 }
 
 function extractTypeParam(
@@ -224,7 +220,7 @@ function extractParams(params: Array<ParamDef | undefined>): string {
   return entries.join(", ");
 }
 
-function createFunctionSignature(definition: FunctionDef) {
+function createFunctionSignature(name: string, definition: FunctionDef) {
   const asyncMessage = definition.isAsync ? "async " : "";
   const template = extractTypeParams(definition.typeParams, ["<", ">"]);
   const params = extractParams(definition.params);
@@ -234,7 +230,7 @@ function createFunctionSignature(definition: FunctionDef) {
 
   return `\
 \`\`\`ts
-${asyncMessage}function${template}(${params}): ${returns};
+declare ${asyncMessage}function ${name}${template}(${params}): ${returns};
 \`\`\``;
 }
 
@@ -251,21 +247,19 @@ function createMarkdownEntry(props: CreateMarkdownEntry): string {
 <table><tr><td width="400px" valign="top">
 
 ### \`${name}\`
+
 <br />
 
 ${signature}
 
 <br />
+
 ${description}
 
-</td><td width="600px"><br>
+</td><td width="600px"><br />
 
 ${examples}
 
 </td></tr></table>
 `;
-}
-
-if (import.meta.main) {
-  run();
 }
