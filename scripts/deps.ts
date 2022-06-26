@@ -10,4 +10,5 @@ export {
   createStreaming,
   type GlobalConfiguration,
 } from "https://deno.land/x/dprint@0.2.0/mod.ts";
+export * as Eta from "https://deno.land/x/eta@v1.12.3/mod.ts";
 export * as semver from "https://deno.land/x/semver@v1.4.0/mod.ts";

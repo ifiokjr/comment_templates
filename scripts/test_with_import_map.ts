@@ -9,8 +9,8 @@ try {
 
   const importMap = {
     "imports": {
-      [`https://deno.land/x/comment-templates@${version}/`]: cwd,
-      "https://deno.land/x/comment-templates@<%=it.version%>/": cwd,
+      [`https://deno.land/x/comment_templates@${version}/`]: cwd,
+      "https://deno.land/x/comment_templates@<%=it.version%>/": cwd,
     },
   };
 
@@ -20,7 +20,6 @@ try {
       cmd: ["deno", "test", "--import-map", importMapPath, "--doc", ...[
         "mod.ts",
         "mod.d.md",
-        "readme.md",
       ]],
       cwd,
     }).status();

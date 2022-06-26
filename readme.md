@@ -17,9 +17,15 @@ The solution is to wrap the content you want to replace in a language specific c
 
 ### `commentTemplate`
 
+<br />
+
 ```ts
 declare function commentTemplate(props: CommentTemplateProps): string;
 ```
+
+<br />
+
+<!-- ={modCommentTemplate|prefix:"\n"|indent:" * "|suffix:"\n * "} -->
 
 Provide a string which contains template tags (using html and slash comments) that should be replaced with the variables provided.
 
@@ -56,7 +62,7 @@ The supported pipe names are.
 - `prefix`: `|prefix:"prefix"` will prefix the value with the provided string.
 - `suffix`: `|suffix:"suffix"` will suffix the value with the provided string.
 - `codeblock`: `|codeblock:"language"` will wrap the value in a codeblock with the provided language and set the indentation.
-- `indent`: `|indent:"  "` will indent each line by the provided string. This can be used to provide custom prefixes like `|indent:" * "` to
+- `indent`: `|indent:" "` will indent each line by the provided string. This can be used to provide custom prefixes like `|indent:" * "` to
 - `code`: `|code:null` will wrap the value in inline code `\`` backticks.
 - `replace`: `|replace:"search,replace"` will replace the search string with the replacement where the `,` is used to split the string.
 
@@ -64,10 +70,12 @@ The supported pipe arguments are `true`, `false`, `null`, any number `0123456789
 
 **NOTE**: The pipe arguments are not processed with regex and at the moment the regex is timing out when a single pipe is used without arguments. In order to use a single pipe, please provide an argument, even if it is an empty string.
 
-</td><td width="600px"><br>
+</td><td width="600px"><br />
 
 ```ts
-import { commentTemplate } from "https://deno.land/x/comment-templates@0.0.0/mod.ts";
+import {
+  commentTemplate,
+} from "https://deno.land/x/comment_templates@0.1.0/mod.ts";
 import { assertEquals } from "./tests/deps.ts";
 
 const exampleVersion = "2.1.0";
@@ -99,6 +107,8 @@ assertEquals(
 # <!-- ={name} -->package<!-- {/name} --><!-- ={version} -->`@2.1.0`<!-- {/version} -->
 ```
 
+<!-- {/modCommentTemplate} -->
+
 </td></tr></table>
 
 <table><tr><td width="400px" valign="top">
@@ -113,11 +123,12 @@ interface CommentTemplateProps {
   variables: CommentTemplateVariables;
   throwIfMissingVariable?: boolean;
   patterns?: Pattern[];
-  exclude?: Exclude;
+  exclude?: ExcludeFunction;
 }
 ```
 
 <br />
+
 These are the props that are passed into the `commentTemplate` function.
 
 **content**: `string`
@@ -143,11 +154,11 @@ The comment patterns to match for the provided content. You can limit the kind o
 - `html` will be able to transform markdown files with comments.
 - `slash` will be able to transform languages with `slash star` comments like JavaScript and TypeScript.
 
-**exclude**: _(optional)_ `Exclude`
+**exclude**: _(optional)_ `ExcludeFunction`
 
 Return true when you want to exclude a match from being transformed.
 
-</td><td width="600px"><br>
+</td><td width="600px"><br />
 
 **content**
 
@@ -157,7 +168,7 @@ The `content` can be pulled in from a file and then written back to the same fil
 import {
   commentTemplate,
   type CommentTemplateProps,
-} from "https://deno.land/x/comment-templates@0.0.0/mod.ts";
+} from "https://deno.land/x/comment_templates@0.0.0/mod.ts";
 
 const props: CommentTemplateProps = {
   content: await Deno.readTextFile(
@@ -176,7 +187,7 @@ Here is an example of creating variables with both a function and a string.
 ```ts
 import {
   type CommentTemplateProps,
-} from "https://deno.land/x/comment-templates@0.0.0/mod.ts";
+} from "https://deno.land/x/comment_templates@0.0.0/mod.ts";
 
 const props: CommentTemplateProps = {
   content: await Deno.readTextFile(
@@ -194,7 +205,7 @@ const props: CommentTemplateProps = {
 The following example excludes a match based on the provided name.
 
 ```ts
-import { CommentTemplateProps } from "https://deno.land/x/comment-templates@0.0.0/mod.ts";
+import { CommentTemplateProps } from "https://deno.land/x/comment_templates@0.0.0/mod.ts";
 
 const props: CommentTemplateProps = {
   content: "<!-- ={excludedName} --><!-- {/excludedName} -->",
@@ -209,6 +220,8 @@ const props: CommentTemplateProps = {
 
 ### `extractTemplateValues`
 
+<br />
+
 ```ts
 declare function extractTemplateValues(
   content: string,
@@ -216,11 +229,28 @@ declare function extractTemplateValues(
 ```
 
 <br />
-<!-- ={modExtractTemplateValues|prefix:"\n"|indent:" * "|suffix:"\n * "} --><!-- {/name} -->
 
-</td><td width="600px"><br>
+<!-- ={modExtractTemplateValues|prefix:"\n"|indent:" * "|suffix:"\n * "} -->
+
+Extract the snippets from the provided content.
+
+This returns each named snippet in a map.
+
+</td><td width="600px"><br />
+
+The following example extracts the snippets from the provided content.
+
+```ts
+import {
+  extractTemplateValues,
+} from "https://deno.land/x/comment_templates@0.1.0/mod.ts";
+
+const content = await Deno.readTextFile("./mod.d.md");
+const variables = extractTemplateValues(content);
+// => ReadonlyMap<string, string>
+```
+
+<!-- {/modExtractTemplateValues} -->
 
 </td></tr></table>
 <!-- {/apiDocs}-->
-
-hello

@@ -1,4 +1,5 @@
 /**
+ * <!-- ={modCommentTemplate|prefix:"\n"|indent:" * "|suffix:"\n * "} -->
  * Provide a string which contains template tags (using html and slash comments)
  * that should be replaced with the variables provided.
  *
@@ -48,7 +49,7 @@
  *   string.
  * - `codeblock`: `|codeblock:"language"` will wrap the value in a codeblock
  *   with the provided language and set the indentation.
- * - `indent`: `|indent:"  "` will indent each line by the provided string. This
+ * - `indent`: `|indent:" "` will indent each line by the provided string. This
  *   can be used to provide custom prefixes like `|indent:" * "` to
  * - `code`: `|code:null` will wrap the value in inline code `\`` backticks.
  * - `replace`: `|replace:"search,replace"` will replace the search string with
@@ -65,23 +66,25 @@
  * ### Examples
  *
  * ```ts
- * import { assertEquals } from './tests/deps.ts';
- * import { commentTemplate } from 'https://deno.land/x/comment-templates@0.0.0/mod.ts';
+ * import {
+ *   commentTemplate,
+ * } from "https://deno.land/x/comment_templates@0.1.0/mod.ts";
+ * import { assertEquals } from "./tests/deps.ts";
  *
- * const exampleVersion = '2.1.0';
- * const exampleName = 'Comment Template!';
- * const fileUrl = new URL('tests/fixtures/sample.md', import.meta.url);
+ * const exampleVersion = "2.1.0";
+ * const exampleName = "Comment Template!";
+ * const fileUrl = new URL("tests/fixtures/sample.md", import.meta.url);
  * const content = await Deno.readTextFile(fileUrl);
  *
  * // Transform and use the variables in the content.
  * const transformed = commentTemplate({
  *   content,
- *   variables: { exampleVersion, exampleName }
+ *   variables: { exampleVersion, exampleName },
  * });
  *
  * assertEquals(
  *   transformed,
- *   `# <!-- ={exampleName} -->CommentTemplate!<!-- {/exampleName} --><!-- ={exampleVersion|prefix:"@"|code:null} -->\`@2.1.0\`<!-- {/exampleVersion} -->\n`
+ *   `# <!-- ={exampleName} -->CommentTemplate!<!-- {/exampleName} --><!-- ={exampleVersion|prefix:"@"|code:null} -->\`@2.1.0\`<!-- {/exampleVersion} -->\n`,
  * );
  * ```
  *
@@ -96,6 +99,7 @@
  * ```md
  * # <!-- ={name} -->package<!-- {/name} --><!-- ={version} -->`@2.1.0`<!-- {/version} -->
  * ```
+ * <!-- {/modCommentTemplate} -->
  */
 export function commentTemplate(props: CommentTemplateProps): string {
   const {
@@ -180,11 +184,11 @@ const pipes = {
     },
   prefix: (prefix = "") =>
     (value: string) => {
-      return `${prefix}${value}`;
+      return `${prefix.replace(/\\n/g, "\n")}${value}`;
     },
   suffix: (suffix = "") =>
     (value: string) => {
-      return `${value}${suffix}`;
+      return `${value}${suffix.replace(/\\n/g, "\n")}`;
     },
   codeblock: (language = "") =>
     (value: string) => {
@@ -194,8 +198,9 @@ const pipes = {
     (value: string) => {
       return value
         .split("\n")
-        .map((line) => `${indent}${line}`)
-        .join("\n");
+        // .map((line) => `${indent}${line}`)
+        // .join("\n");
+        .join(`\n${indent}`);
     },
   code: () =>
     (value: string) => {
@@ -441,7 +446,7 @@ export interface CommentTemplateProps {
    * import {
    *   commentTemplate,
    *   type CommentTemplateProps
-   * } from 'https://deno.land/x/comment-templates@0.0.0/mod.ts';
+   * } from 'https://deno.land/x/comment_templates@0.0.0/mod.ts';
    *
    * const props: CommentTemplateProps = {
    *   content: await Deno.readTextFile(new URL('tests/fixtures/sample.md', import.meta.url)),
@@ -469,7 +474,7 @@ export interface CommentTemplateProps {
    * ```ts
    * import {
    *   type CommentTemplateProps
-   * } from 'https://deno.land/x/comment-templates@0.0.0/mod.ts';
+   * } from 'https://deno.land/x/comment_templates@0.0.0/mod.ts';
    *
    * const props: CommentTemplateProps = {
    *   content: await Deno.readTextFile(new URL('tests/fixtures/sample.md', import.meta.url)),
@@ -495,11 +500,11 @@ export interface CommentTemplateProps {
    * the `throwIfMissingVariable` is set to `true`.
    *
    * ```ts
-   * import { assertThrows } from 'https://deno.land/x/comment-templates@0.0.0/tests/deps.ts'
+   * import { assertThrows } from 'https://deno.land/x/comment_templates@0.0.0/tests/deps.ts'
    * import {
    *   commentTemplate,
    *   type CommentTemplateProps
-   * } from 'https://deno.land/x/comment-templates@0.0.0/mod.ts';
+   * } from 'https://deno.land/x/comment_templates@0.0.0/mod.ts';
    *
    * const props: CommentTemplateProps = {
    *   content: `<!-- ={nonExistent} --><!-- {/nonExistent} -->`,
@@ -525,7 +530,7 @@ export interface CommentTemplateProps {
    * ### Examples
    *
    * ```ts
-   * import { type CommentTemplateProps } from 'https://deno.land/x/comment-templates@0.0.0/mod.ts';
+   * import { type CommentTemplateProps } from 'https://deno.land/x/comment_templates@0.0.0/mod.ts';
    *
    * const props: CommentTemplateProps = {
    *   content: `<!-- ={nonExistent} --><!-- {/nonExistent} -->`,
@@ -544,7 +549,7 @@ export interface CommentTemplateProps {
    * The following example excludes a match based on the provided name.
    *
    * ```ts
-   * import { CommentTemplateProps } from 'https://deno.land/x/comment-templates@0.0.0/mod.ts';
+   * import { CommentTemplateProps } from 'https://deno.land/x/comment_templates@0.0.0/mod.ts';
    *
    * const props: CommentTemplateProps = {
    *  content: '<!-- ={excludedName} --><!-- {/excludedName} -->',
@@ -553,10 +558,10 @@ export interface CommentTemplateProps {
    * }
    * ```
    */
-  exclude?: Exclude;
+  exclude?: ExcludeFunction;
 }
 
-type Exclude = (details: ExcludeDetails) => boolean;
+type ExcludeFunction = (details: ExcludeDetails) => boolean;
 
 interface ExcludeDetails {
   /**
@@ -585,7 +590,7 @@ interface ExcludeDetails {
    * The following excludes a match based on the provided name.
    *
    * ```ts
-   * import { CommentTemplateProps } from 'https://deno.land/x/comment-templates@0.0.0/mod.ts';
+   * import { CommentTemplateProps } from 'https://deno.land/x/comment_templates@0.0.0/mod.ts';
    *
    * const props: CommentTemplateProps = {
    *  content: '<!-- ={excludedName} --><!-- {/excludedName} -->',
@@ -612,8 +617,6 @@ interface ExcludeDetails {
   fullMatch: string;
 }
 
-// type Skip = ()
-
 /**
  * A typesafe implementation of `Object.entries()`
  *
@@ -630,7 +633,25 @@ function entries<
 }
 
 /**
- * <!-- ={modExtractTemplateValues|prefix:"\n"|indent:" * "|suffix:"\n * "} --><!-- {/name} -->
+ * <!-- ={modExtractTemplateValues|prefix:"\n"|indent:" * "|suffix:"\n * "} -->
+ * Extract the snippets from the provided content.
+ *
+ * This returns each named snippet in a map.
+ *
+ * ### Examples
+ *
+ * The following example extracts the snippets from the provided content.
+ *
+ * ```ts
+ * import {
+ *   extractTemplateValues,
+ * } from "https://deno.land/x/comment_templates@0.1.0/mod.ts";
+ *
+ * const content = await Deno.readTextFile("./mod.d.md");
+ * const variables = extractTemplateValues(content);
+ * // => ReadonlyMap<string, string>
+ * ```
+ * <!-- {/modExtractTemplateValues} -->
  */
 export function extractTemplateValues(
   content: string,

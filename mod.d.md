@@ -48,7 +48,7 @@ The supported pipe arguments are `true`, `false`, `null`, any number `0123456789
 ```ts
 import {
   commentTemplate,
-} from "https://deno.land/x/comment-templates@<%=it.version%>/mod.ts";
+} from "https://deno.land/x/comment_templates@<%=it.version%>/mod.ts";
 import { assertEquals } from "./tests/deps.ts";
 
 const exampleVersion = "2.1.0";
@@ -82,7 +82,7 @@ assertEquals(
 
 <!-- {/modCommentTemplate} -->
 
-<!-- ={modExtractTemplateValues} -->
+<!-- @{modExtractTemplateValues} -->
 
 Extract the snippets from the provided content.
 
@@ -95,7 +95,7 @@ The following example extracts the snippets from the provided content.
 ```ts
 import {
   extractTemplateValues,
-} from "https://deno.land/x/comment-templates@<%=it.version%>/mod.ts";
+} from "https://deno.land/x/comment_templates@<%=it.version%>/mod.ts";
 
 const content = await Deno.readTextFile("./mod.d.md");
 const variables = extractTemplateValues(content);

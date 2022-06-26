@@ -1,19 +1,39 @@
-// deno-lint-ignore-file no-await-in-loop
-import { commentTemplate } from "../../mod.ts";
-import { path } from "../deps.ts";
+import { commentTemplate, extractTemplateValues } from "../../mod.ts";
+import { Eta, path } from "../deps.ts";
+import { formatMarkdown } from "../dprint.ts";
+import { getVersion } from "../helpers.ts";
 import { generateApi } from "./generate-api.ts";
 
 const cwd = new URL("../..", import.meta.url).pathname;
-const apiDocs = await generateApi(new URL("../../mod.ts", import.meta.url));
-console.log({ cwd, apiDocs });
 
-const files = { "readme.md": { apiDocs } };
+const promises: Array<() => Promise<void>> = [];
 
-for (const [relative, variables] of Object.entries(files)) {
+const files = {
+  "readme.md": async () => {
+    const apiDocs = await generateApi(new URL("../../mod.ts", import.meta.url));
+    return { apiDocs };
+  },
+  "mod.ts": async () => {
+    const version = await getVersion();
+    const snippet = await Deno.readTextFile(path.join(cwd, "mod.d.md"));
+    const map = extractTemplateValues(
+      formatMarkdown(Eta.render(snippet, { version }) as string),
+    );
+    return Object.fromEntries(map);
+  },
+};
+
+for (const [relative, promiseFn] of Object.entries(files)) {
   const file = path.join(cwd, relative);
-  const content = await Deno.readTextFile(file);
-  const transformed = commentTemplate({ content, variables });
 
-  console.log({ file }, content === transformed);
-  await Deno.writeTextFile(file, transformed + "\n\nhello");
+  promises.push(async () => {
+    const content = await Deno.readTextFile(file);
+    const transformed = commentTemplate({
+      content,
+      variables: await promiseFn(),
+    });
+    await Deno.writeTextFile(file, transformed);
+  });
 }
+
+await Promise.all(promises.map((fn) => fn()));

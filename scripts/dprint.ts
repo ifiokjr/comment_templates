@@ -1,5 +1,4 @@
 import { createStreaming, GlobalConfiguration } from "./deps.ts";
-import { run } from "./docs.ts";
 
 const globalConfig: GlobalConfiguration = {
   indentWidth: 2,
@@ -10,9 +9,13 @@ const markdownFormatter = await createStreaming(
 );
 
 markdownFormatter.setConfig(globalConfig, {
-  semiColons: "asi",
-  textWrap: "never",
+  textWrap: "always",
+  lineWidth: 77,
 });
 
-// outputs: "const t = 5\n"
-console.log(markdownFormatter.formatText("file.ts", await run()));
+export function formatMarkdown(md: string): string {
+  return markdownFormatter.formatText("file.md", md, {
+    textWrap: "always",
+    lineWidth: 77,
+  });
+}

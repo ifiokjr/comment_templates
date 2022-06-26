@@ -56,7 +56,7 @@ a good test
 \`\`\`<!-- {/test} -->
 `;
 
-snapshot[`commentTemplate > pipes > indent 1`] = `<!-- ={test|indent:"  "} -->  a good test<!-- {/test} -->`;
+snapshot[`commentTemplate > pipes > indent 1`] = `<!-- ={test|indent:"  "} -->a good test<!-- {/test} -->`;
 
 snapshot[`commentTemplate > pipes > code 1`] = `<!-- ={test|code:} -->\`a good test\`<!-- {/test} -->`;
 
