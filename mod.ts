@@ -3,7 +3,7 @@
  * that should be replaced with the variables provided.
  *
  * ```md
- * <!-- ={name} -->Placeholder text<!-- {/name} -->
+ * <!-- ={exampleName} -->Placeholder text<!-- {/exampleName} -->
  * ```
  *
  * The above code will replace `Placeholder text` with the value of the `name`
@@ -30,12 +30,18 @@
  * - Multiple pipes can be applied to a single value.
  *
  * ```md
- * <!-- ={sample|prefix:"This is a prefix"|codeblock:"tsx"|suffix:"This is a suffix"} --><!-- {/sample} -->
+ * <!-- ={examplePipe|prefix:"This is a prefix"|codeblock:"tsx"|suffix:"This is a suffix"} --><!-- {/examplePipe} -->
  * ```
  *
  * The supported pipe names are.
  *
- * - `string`: `|string:true` will wrap the value in quotes.
+ * - `trim`: `|trim:null` trim all whitespace from the start and end of the
+ *   content.
+ * - `trimStart`: `|trim:null` trim all whitespace from the start of the
+ *   content.
+ * - `trimEnd`: `|trim:null` trim all whitespace from the end of the content.
+ * - `string`: `|string:true` will wrap the value in single quotes.
+ *   |string:false` will wrap the value in double quotes.
  * - `prefix`: `|prefix:"prefix"` will prefix the value with the provided
  *   string.
  * - `suffix`: `|suffix:"suffix"` will suffix the value with the provided
@@ -59,25 +65,30 @@
  * ### Examples
  *
  * ```ts
- * import { markdownTemplate, code } from 'https://deno.land/x/markdown_template/mod.ts';
- * const version = '@2.1.0';
- * const name = 'comment_templates';
- * const fileUrl = new URL('readme.md', import.meta.url);
+ * import { assertEquals } from './tests/deps.ts';
+ * import { commentTemplate } from 'https://deno.land/x/comment-templates@0.1.0/mod.ts';
+ *
+ * const exampleVersion = '2.1.0';
+ * const exampleName = 'Comment Template!';
+ * const fileUrl = new URL('tests/fixtures/sample.md', import.meta.url);
  * const content = await Deno.readTextFile(fileUrl);
  *
  * // Transform and use the variables in the content.
- * const transformed = markdownTemplate({
+ * const transformed = commentTemplate({
  *   content,
- *   variables: { version, name }
+ *   variables: { exampleVersion, exampleName }
  * });
  *
- * await Deno.writeFile(fileUrl, transformed);
+ * assertEquals(
+ *   transformed,
+ *   `# <!-- ={exampleName} -->CommentTemplate!<!-- {/exampleName} --><!-- ={exampleVersion|prefix:"@"|code:null} -->\`@2.1.0\`<!-- {/exampleVersion} -->\n`
+ * );
  * ```
  *
  * **Before:** `readme.md`
  *
  * ```md
- * # <!-- ={name} --><!-- {/name} --><!-- ={version|code} --><!-- {/version} -->
+ * # <!-- ={name} --><!-- {/name} --><!-- ={version|prefix:"@"|code:null} --><!-- {/version} -->
  * ```
  *
  * **After:** `readme.md`
@@ -86,12 +97,13 @@
  * # <!-- ={name} -->package<!-- {/name} --><!-- ={version} -->`@2.1.0`<!-- {/version} -->
  * ```
  */
-export function markdownTemplate(props: MarkdownTemplateProps): string {
+export function commentTemplate(props: CommentTemplateProps): string {
   const {
     content,
     variables,
     throwIfMissingVariable = false,
-    patterns = ['slash', 'xml'],
+    patterns = ["slash", "xml"],
+    exclude,
   } = props;
   let transformed = content;
 
@@ -108,7 +120,7 @@ export function markdownTemplate(props: MarkdownTemplateProps): string {
       const length = full?.length;
       const fn = createPiper(pipes);
 
-      if (!name || !open || !close || typeof start !== 'number' || !length) {
+      if (!name || !open || !close || typeof start !== "number" || !length) {
         continue;
       }
 
@@ -118,14 +130,29 @@ export function markdownTemplate(props: MarkdownTemplateProps): string {
         end - close.length,
       ];
 
-      let replacementValue: string;
-      const rawValue = variables[name];
+      const variable = variables[name];
+      const replacementValue = typeof variable === "string"
+        ? fn(variable)
+        : typeof variable === "function"
+        ? fn(variable(value))
+        : "";
 
-      if (typeof rawValue === 'string') {
-        replacementValue = rawValue;
-      } else if (typeof rawValue === 'function') {
-        replacementValue = rawValue(value);
-      } else {
+      const details: ExcludeDetails = {
+        end,
+        start,
+        name,
+        replaceEnd,
+        replaceStart,
+        fullMatch: full,
+        value: replacementValue,
+      };
+
+      if (exclude?.(details)) {
+        continue;
+      }
+
+      // deno-lint-ignore eqeqeq
+      if (variable == null) {
         if (throwIfMissingVariable) {
           throw new CommentTemplateError(`Missing variable: '${name}'`);
         }
@@ -135,7 +162,7 @@ export function markdownTemplate(props: MarkdownTemplateProps): string {
 
       const before = transformed.slice(0, replaceStart);
       const after = transformed.slice(replaceEnd, transformed.length);
-      transformed = `${before}${fn(replacementValue)}${after}`;
+      transformed = `${before}${replacementValue}${after}`;
     }
   }
 
@@ -143,40 +170,39 @@ export function markdownTemplate(props: MarkdownTemplateProps): string {
 }
 
 const pipes = {
-  string:
-    (singleQuotes = false) =>
+  trim: () => (value: string) => value.trim(),
+  trimStart: () => (value: string) => value.trimStart(),
+  trimEnd: () => (value: string) => value.trimEnd(),
+  string: (singleQuotes = false) =>
     (value: string) => {
       const quoteType = singleQuotes ? "'" : '"';
       return `${quoteType}${value}${quoteType}`;
     },
-  prefix:
-    (prefix = '') =>
+  prefix: (prefix = "") =>
     (value: string) => {
       return `${prefix}${value}`;
     },
-  suffix:
-    (suffix = '') =>
+  suffix: (suffix = "") =>
     (value: string) => {
       return `${value}${suffix}`;
     },
-  codeblock:
-    (language = '') =>
+  codeblock: (language = "") =>
     (value: string) => {
       return `\`\`\`${language}\n${value}\n\`\`\``;
     },
-  indent:
-    (indent = '') =>
+  indent: (indent = "") =>
     (value: string) => {
       return value
-        .split('\n')
+        .split("\n")
         .map((line) => `${indent}${line}`)
-        .join('\n');
+        .join("\n");
     },
-  code: () => (value: string) => {
-    return `\`${value}\``;
-  },
-  replace: (value = '') => {
-    const [search = '', replace = ''] = value.split(',');
+  code: () =>
+    (value: string) => {
+      return `\`${value}\``;
+    },
+  replace: (value = "") => {
+    const [search = "", replace = ""] = value.split(",");
     return (value: string) => {
       return value.replaceAll(search, replace);
     };
@@ -185,11 +211,11 @@ const pipes = {
 
 type Piper = (value: string) => string;
 interface ArgToken {
-  type: 'arg';
+  type: "arg";
   value: string | null | number | boolean;
 }
 interface PipeToken {
-  type: 'pipe';
+  type: "pipe";
   name: string;
 }
 type Token = PipeToken | ArgToken;
@@ -236,16 +262,16 @@ function createPiper(pipeString: string | undefined): Piper {
 
     if (!char) break;
 
-    if (char === '|') {
+    if (char === "|") {
       index++; // Skip the pipe character
       const remaining = pipeString.slice(index);
       const nextIndex = remaining.search(/[^a-z_A-Z0-9$]/);
-      tokens.push({ type: 'pipe', name: remaining.slice(0, nextIndex) });
+      tokens.push({ type: "pipe", name: remaining.slice(0, nextIndex) });
       index += nextIndex;
       continue;
     }
 
-    if (char === ':') {
+    if (char === ":") {
       let shouldContinue = false;
       index++;
 
@@ -254,7 +280,7 @@ function createPiper(pipeString: string | undefined): Piper {
           continue;
         }
 
-        tokens.push({ type: 'arg', value });
+        tokens.push({ type: "arg", value });
         index += name.length;
         shouldContinue = true;
         break;
@@ -271,7 +297,7 @@ function createPiper(pipeString: string | undefined): Piper {
       if (value === '"') {
         index++;
         value = pipeString.slice(index, pipeString.indexOf('"', index));
-        tokens.push({ type: 'arg', value });
+        tokens.push({ type: "arg", value });
         index += value.length + 1;
         continue;
       }
@@ -280,7 +306,7 @@ function createPiper(pipeString: string | undefined): Piper {
         const remaining = pipeString.slice(index);
         const nextIndex = remaining.search(/[^\.0-9_]/);
         const value = Number(remaining.slice(0, nextIndex));
-        tokens.push({ type: 'arg', value });
+        tokens.push({ type: "arg", value });
         index += nextIndex;
         continue;
       }
@@ -289,12 +315,12 @@ function createPiper(pipeString: string | undefined): Piper {
     index++;
   }
 
-  let args: ArgToken['value'][] = [];
+  let args: ArgToken["value"][] = [];
   let fn: // deno-lint-ignore no-explicit-any
-  ((...args: any[]) => Piper) | undefined;
+    ((...args: any[]) => Piper) | undefined;
 
   for (const token of tokens) {
-    if (token.type === 'arg') {
+    if (token.type === "arg") {
       args.push(token.value);
       continue;
     }
@@ -344,7 +370,7 @@ const XML_COMMENT_VARIABLE =
 const SLASH_COMMENT_VARIABLE =
   /(?<open>\/\*\s*=\{(?<name>[a-z_A-Z0-9$]+)(?<pipes>(?:\|[a-z_A-Z0-9$]+(?::(?:null|true|false|[0-9_\.]+|"[^"]*")))*)\}\s*\*\\)(?<value>.*)(?<close>\/\*\s*\{\/\k<name>\}\s*\*\\)/gm;
 
-//(?:string|prefix|suffix|codeblock|indent|code|replace)
+// (?:string|prefix|suffix|codeblock|indent|code|replace)
 
 const PATTERNS = {
   /**
@@ -368,10 +394,13 @@ export class CommentTemplateError extends Error {
    *
    * Useful for verifying within a `catch` block.
    *
-   * ```
+   * ```ts
+   * import { commentTemplate, CommentTemplateError } from './mod.ts';
+   * const variables = { exampleValue: 'hello!' };
+   *
    * try {
-   *   const content = await Deno.readFile(new URL('readme.md', import.meta.url));
-   *   markdownTemplate({ content, variables, throwIfMissingVariable: true });
+   *   const content = await Deno.readTextFile(new URL('readme.md', import.meta.url));
+   *   commentTemplate({ content, variables, throwIfMissingVariable: true });
    * } catch (error) {
    *   if (CommentTemplateError.is(error)) {
    *    // this is an error!
@@ -388,41 +417,202 @@ export class CommentTemplateError extends Error {
   }
 }
 
-export interface CommentTemplateVariables {
-  [name: string]: string | ((currentValue: string | undefined) => string);
+type CommentTemplateVariableFunction = (
+  currentValue: string | undefined,
+) => string;
+
+interface CommentTemplateVariables {
+  [name: string]: string | CommentTemplateVariableFunction;
 }
 
-export interface MarkdownTemplateProps {
+/**
+ * These are the props that are passed into the `commentTemplate` function.
+ */
+export interface CommentTemplateProps {
   /**
-   * The content to transform.
+   * This is the content to transform and is required.
+   *
+   * ### Examples
+   *
+   * The `content` can be pulled in from a file and then written back to the
+   * same file. All non-related content will be preserved.
+   *
+   * ```ts
+   * import {
+   *   commentTemplate,
+   *   type CommentTemplateProps
+   * } from 'https://deno.land/x/comment-templates@0.1.0/mod.ts';
+   *
+   * const props: CommentTemplateProps = {
+   *   content: await Deno.readTextFile(new URL('tests/fixtures/sample.md', import.meta.url)),
+   *   variables: { name: 'Deno' },
+   * }
+   *
+   * const transformedContent = commentTemplate(props);
+   * ```
    */
   content: string;
+
   /**
    * Pass variables to the template which replace the content.
    *
    * If a function is provided it is called with the current value, which can be
-   * undefined.
-   *
-   * Variables must be a flat object structure and cannot contain nested objects.
+   * `undefined`. Variables must be a flat object structure and cannot contain nested
+   * objects.
    *
    * There is currently no support for nesting.
+   *
+   * ### Examples
+   *
+   * Here is an example of creating variables with both a function and a string.
+   *
+   * ```ts
+   * import {
+   *   type CommentTemplateProps
+   * } from 'https://deno.land/x/comment-templates@0.1.0/mod.ts';
+   *
+   * const props: CommentTemplateProps = {
+   *   content: await Deno.readTextFile(new URL('tests/fixtures/sample.md', import.meta.url)),
+   *   variables: {
+   *     simple: 'a simple string',
+   *     complex: value => value ? `${value} is complex` : 'seems undefined'
+   *   },
+   * }
+   * ```
    */
   variables: CommentTemplateVariables;
 
   /**
-   * Throw an error if a variable is not found.
+   * Throw an error if a variable is not found. This can be useful for making
+   * sure out of date comments don't clutter up your markdown and Typescript
+   * files.
    *
    * @default false
+   *
+   * ### Examples
+   *
+   * This example shows how an error is thrown if a variable is not found when
+   * the `throwIfMissingVariable` is set to `true`.
+   *
+   * ```ts
+   * import { assertThrows } from 'https://deno.land/x/comment-templates@0.1.0/tests/deps.ts'
+   * import {
+   *   commentTemplate,
+   *   type CommentTemplateProps
+   * } from 'https://deno.land/x/comment-templates@0.1.0/mod.ts';
+   *
+   * const props: CommentTemplateProps = {
+   *   content: `<!-- ={nonExistent} --><!-- {/nonExistent} -->`,
+   *   variables: { name: 'Deno' },
+   *   throwIfMissingVariable: true,
+   * };
+   *
+   * assertThrows(() => commentTemplate(props)); // => true!
+   * ```
    */
   throwIfMissingVariable?: boolean;
 
   /**
-   * The comment patterns to match for the provided content.
+   * The comment patterns to match for the provided content. You can limit the
+   * kind of comments that this function will transform.
+   *
+   * - `html` will be able to transform markdown files with comments.
+   * - `slash` will be able to transform languages with `slash star` comments
+   *   like JavaScript and TypeScript.
    *
    * @default ['html', 'slash']
+   *
+   * ### Examples
+   *
+   * ```ts
+   * import { type CommentTemplateProps } from 'https://deno.land/x/comment-templates@0.1.0/mod.ts';
+   *
+   * const props: CommentTemplateProps = {
+   *   content: `<!-- ={nonExistent} --><!-- {/nonExistent} -->`,
+   *   variables: { name: 'Deno' },
+   *   patterns: ['html'], // limit to markdown files
+   * };
+   * ```
    */
   patterns?: Pattern[];
+
+  /**
+   * Return true when you want to exclude a match from being transformed.
+   *
+   * ### Examples
+   *
+   * The following example excludes a match based on the provided name.
+   *
+   * ```ts
+   * import { CommentTemplateProps } from 'https://deno.land/x/comment-templates@0.1.0/mod.ts';
+   *
+   * const props: CommentTemplateProps = {
+   *  content: '<!-- ={excludedName} --><!-- {/excludedName} -->',
+   *  variables: {}
+   *  exclude: ({ name }) => name.startsWith('excluded')
+   * }
+   * ```
+   */
+  exclude?: Exclude;
 }
+
+type Exclude = (details: ExcludeDetails) => boolean;
+
+interface ExcludeDetails {
+  /**
+   * The replacement value after all transformations have been applied.
+   */
+  value: string;
+
+  /**
+   * The starting index for the match (the index of the opening comment tag).
+   */
+  start: number;
+
+  /**
+   * The end index for the full match (the end index of the closing comment tag).
+   */
+  end: number;
+
+  /**
+   * The variable name requested.
+   *
+   * You might want to skip this value if there are some comment tags that
+   * you don't want to use.
+   *
+   * ### Example
+   *
+   * The following excludes a match based on the provided name.
+   *
+   * ```ts
+   * import { CommentTemplateProps } from 'https://deno.land/x/comment-templates@0.1.0/mod.ts';
+   *
+   * const props: CommentTemplateProps = {
+   *  content: '<!-- ={excludedName} --><!-- {/excludedName} -->',
+   *  variables: {}
+   *  exclude: ({ name }) => name.startsWith('excluded')
+   * }
+   * ```
+   */
+  name: string;
+
+  /**
+   * The starting index for the content between the tags. What was actually replaced.
+   */
+  replaceStart: number;
+
+  /**
+   * The ending index for the content between the tags. What was actually replaced.
+   */
+  replaceEnd: number;
+
+  /**
+   * The full match.
+   */
+  fullMatch: string;
+}
+
+// type Skip = ()
 
 /**
  * A typesafe implementation of `Object.entries()`

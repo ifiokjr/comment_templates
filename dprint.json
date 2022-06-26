@@ -4,16 +4,14 @@
     "module.sortExportDeclarations": "caseInsensitive",
     "module.sortImportDeclarations": "caseInsensitive",
     "exportDeclaration.sortNamedExports": "caseInsensitive",
-    "importDeclaration.sortNamedImports": "caseInsensitive"
+    "importDeclaration.sortNamedImports": "caseInsensitive",
+    "commentLine.forceSpaceAfterSlashes": true
   },
-  "json": {},
-  "markdown": {},
+  "json": { "deno": true },
+  "markdown": { "deno": true, "textWrap": "never" },
   "toml": {},
   "includes": ["**/*.{ts,tsx,js,jsx,cjs,mjs,json,md,toml}"],
-  "excludes": [
-    "**/node_modules",
-    "**/*-lock.json"
-  ],
+  "excludes": ["**/node_modules", "**/*-lock.json"],
   "plugins": [
     "https://plugins.dprint.dev/typescript-0.69.5.wasm",
     "https://plugins.dprint.dev/json-0.15.3.wasm",

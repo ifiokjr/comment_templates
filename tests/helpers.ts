@@ -19,3 +19,5 @@ export function snapshot<Content>(
         }),
   });
 }
+
+export { it as test } from "./deps.ts";

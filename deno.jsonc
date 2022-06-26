@@ -1,15 +1,16 @@
 {
 	"tasks": {
-		/** Run all tests.
-    - To update snapshots use `deno task test -- -u`
-    - To specify the test file / folder use `deno task test test.ts`
-    */
+		"docs": "deno run -A scripts/docs.ts",
+		"docs:watch": "deno run --watch -A scripts/docs.ts",
 		"test": "deno test --allow-read='./tests' --allow-write='./tests/snapshots'",
-		/** Run all tests in watch mode.
-    - To update snapshots use `deno task test:watch -- -u`
-    - To specify the test file / folder use `deno task test:watch test.ts`
-    */
-		"test:watch": "deno test --allow-read='./tests' --allow-write='./tests/snapshots' --watch"
+		"test:coverage": "deno task test --coverage=coverage",
+		"test:snapshot": "deno task test -- -u",
+		"test:watch": "deno task test --watch",
+		"check": "dprint check && deno lint && deno task test && CI=true deno task lock && deno task run -h &> /dev/null",
+    "fix": "dprint fmt",
+    "lock:update": "deno run --allow-run=deno --allow-read scripts/cache.ts",
+    "lock": "deno run --allow-run=deno --allow-env=CI --allow-read scripts/cache.ts --reload",
+    "typecheck": "deno --unstable check ./mod.ts"
 	},
 	"compilerOptions": { "noUncheckedIndexedAccess": true },
 	"lint": {

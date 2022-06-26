@@ -1,26 +1,26 @@
 export const snapshot = {};
 
-snapshot[`markdownTemplate > should transform basic content 1`] = `
+snapshot[`commentTemplate > should transform basic content 1`] = `
 # <!-- ={name} -->a new header<!-- {/name} -->
 
 And some other content
 `;
 
-snapshot[`markdownTemplate > should handle multiple transformations 1`] = `
+snapshot[`commentTemplate > should handle multiple transformations 1`] = `
 # <!-- ={name} -->a new header<!-- {/name} -->
 
 And some other <!-- ={adjective} -->awesome<!-- {/adjective} -->content
   this is a <!-- ={size} -->large<!-- {/size} -->.
 `;
 
-snapshot[`markdownTemplate > should skip content when no variable defined 1`] = `
+snapshot[`commentTemplate > should skip content when no variable defined 1`] = `
 # <!-- ={name} -->a new header<!-- {/name} -->
 
 And some other <!-- ={adjective} -->awesome<!-- {/adjective} -->content
   this is a <!-- ={size} -->replace me<!-- {/size} -->.
 `;
 
-snapshot[`markdownTemplate > should support multiline comments 1`] = `
+snapshot[`commentTemplate > should support multiline comments 1`] = `
 # <!-- 
 ={name} -->a new header<!-- {/name} -->
 
@@ -29,29 +29,29 @@ And some other <!-- ={adjective}
   this is a <!-- ={size} -->small<!-- {/size} -->.
 `;
 
-snapshot[`markdownTemplate > should support function variables 1`] = `
+snapshot[`commentTemplate > should support function variables 1`] = `
 # <!-- ={name} -->a new header<!-- {/name} -->
 
 And some other <!-- ={adjective} -->awesome<!-- {/adjective} -->content
   this is a <!-- ={size|code:|suffix:" as code"} -->\`em ecalper\`<!-- {/size} -->.
 `;
 
-snapshot[`markdownTemplate > pipes > string:false 1`] = `<!-- ={test|string:false} -->"a good test"<!-- {/test} -->`;
+snapshot[`commentTemplate > pipes > string:false 1`] = `<!-- ={test|string:false} -->"a good test"<!-- {/test} -->`;
 
-snapshot[`markdownTemplate > pipes > string:true 1`] = `<!-- ={test|string:true} -->'a good test'<!-- {/test} -->`;
+snapshot[`commentTemplate > pipes > string:true 1`] = `<!-- ={test|string:true} -->'a good test'<!-- {/test} -->`;
 
-snapshot[`markdownTemplate > pipes > prefix 1`] = `<!-- ={test|prefix:"not "} -->not a good test<!-- {/test} -->`;
+snapshot[`commentTemplate > pipes > prefix 1`] = `<!-- ={test|prefix:"not "} -->not a good test<!-- {/test} -->`;
 
-snapshot[`markdownTemplate > pipes > suffix 1`] = `<!-- ={test|suffix:", okay..."} -->a good test, okay...<!-- {/test} -->`;
+snapshot[`commentTemplate > pipes > suffix 1`] = `<!-- ={test|suffix:", okay..."} -->a good test, okay...<!-- {/test} -->`;
 
-snapshot[`markdownTemplate > pipes > codeblock 1`] = `
+snapshot[`commentTemplate > pipes > codeblock 1`] = `
 <!-- ={test|codeblock:""} -->\`\`\`
 a good test
 \`\`\`<!-- {/test} -->
 `;
 
-snapshot[`markdownTemplate > pipes > indent 1`] = `<!-- ={test|indent:"  "} -->  a good test<!-- {/test} -->`;
+snapshot[`commentTemplate > pipes > indent 1`] = `<!-- ={test|indent:"  "} -->  a good test<!-- {/test} -->`;
 
-snapshot[`markdownTemplate > pipes > code 1`] = `<!-- ={test|code:} -->\`a good test\`<!-- {/test} -->`;
+snapshot[`commentTemplate > pipes > code 1`] = `<!-- ={test|code:} -->\`a good test\`<!-- {/test} -->`;
 
-snapshot[`markdownTemplate > pipes > replace 1`] = `<!-- ={test|replace:"<!--,other"} -->other Hello --><!-- {/test} -->`;
+snapshot[`commentTemplate > pipes > replace 1`] = `<!-- ={test|replace:"<!--,other"} -->other Hello --><!-- {/test} -->`;
