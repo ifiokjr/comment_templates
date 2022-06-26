@@ -1,11 +1,26 @@
-import { commentTemplate, CommentTemplateError } from "../mod.ts";
-import { assertThrows, describe, it } from "./deps.ts";
+import {
+  commentTemplate,
+  CommentTemplateError,
+  extractTemplateValues,
+} from "../mod.ts";
+import { assertEquals, assertThrows, describe, it } from "./deps.ts";
 import { snapshot } from "./helpers.ts";
 
 describe("commentTemplate", () => {
   it("should transform basic content", async (t) => {
     const content =
       `# <!-- ={name} --><!-- {/name} -->\n\nAnd some other content`;
+    const transformed = commentTemplate({
+      content,
+      variables: { name: "a new header" },
+    });
+
+    await snapshot(t, transformed);
+  });
+
+  it("should transform content with multiple lines", async (t) => {
+    const content =
+      `# <!-- ={name} -->\n\n\n<!-- {/name} -->\n\nAnd some other content`;
     const transformed = commentTemplate({
       content,
       variables: { name: "a new header" },
@@ -163,5 +178,29 @@ describe("commentTemplate", () => {
 
       await snapshot(t, transformed);
     });
+  });
+});
+
+describe("extractTemplateValues", () => {
+  it("should extract simple content", () => {
+    const content = "<!-- @{test} -->some content<!-- {/test} -->";
+    const extracted = extractTemplateValues(content);
+
+    assertEquals(Object.fromEntries(extracted), { test: "some content" });
+  });
+
+  it("can extract multiple items", () => {
+    const content =
+      `<!-- @{test} -->some content<!-- {/test} -->\n\n<!-- @{other} -->\n\nother content\n<!-- {/other} -->\n
+      \nthis is not captured\n\n
+      <!-- @{final} -->final\n\n\n\n content<!-- {/final} -->`;
+    const extracted = extractTemplateValues(content);
+    const expected = {
+      test: "some content",
+      other: "other content",
+      final: "final\n\n\n\n content",
+    };
+
+    assertEquals(Object.fromEntries(extracted), expected);
   });
 });

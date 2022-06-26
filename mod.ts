@@ -366,9 +366,9 @@ function isPipeName(value: string): value is keyof typeof pipes {
  *   provided it will be called with the value.
  */
 const XML_COMMENT_VARIABLE =
-  /(?<open><!--\s*=\{(?<name>[a-z_A-Z0-9$]+)(?<pipes>(?:\|[a-z_A-Z0-9$]+(?::(?:null|true|false|[0-9_\.]+|"[^"]*")*))*)\}\s*-->)(?<value>.*)(?<close><!--\s*\{\/\k<name>\}\s*-->)/gm;
+  /(?<open><!--\s*=\{(?<name>[a-z_A-Z0-9$]+)(?<pipes>(?:\|[a-z_A-Z0-9$]+(?::(?:null|true|false|[0-9_\.]+|"[^"]*")*))*)\}\s*-->)(?<value>.*)(?<close><!--\s*\{\/\k<name>\}\s*-->)/gms;
 const SLASH_COMMENT_VARIABLE =
-  /(?<open>\/\*\s*=\{(?<name>[a-z_A-Z0-9$]+)(?<pipes>(?:\|[a-z_A-Z0-9$]+(?::(?:null|true|false|[0-9_\.]+|"[^"]*")))*)\}\s*\*\\)(?<value>.*)(?<close>\/\*\s*\{\/\k<name>\}\s*\*\\)/gm;
+  /(?<open>\/\*\s*=\{(?<name>[a-z_A-Z0-9$]+)(?<pipes>(?:\|[a-z_A-Z0-9$]+(?::(?:null|true|false|[0-9_\.]+|"[^"]*")))*)\}\s*\*\\)(?<value>.*)(?<close>\/\*\s*\{\/\k<name>\}\s*\*\\)/gms;
 
 // (?:string|prefix|suffix|codeblock|indent|code|replace)
 
@@ -628,3 +628,31 @@ function entries<
 >(value: Type): Entry[] {
   return Object.entries(value) as Entry[];
 }
+
+/**
+ * Extract the snippets from the provided content.
+ *
+ * This returns each named snippet in a map.
+ */
+export function extractTemplateValues(content: string): ReadonlyMap<string, string> {
+  const items: Array<[name: string, value: string]> = [];
+  const matches = content.matchAll(XML_COMMENT_SNIPPET);
+
+  for (const match of matches) {
+    const full = match[0];
+    const { name, value, open, close } = match.groups ?? {};
+    const start = match.index;
+    const length = full?.length;
+
+    if (!name || !open || !close || typeof start !== "number" || !length || !value) {
+      continue;
+    }
+
+    items.push([name, value.trim()])
+  }
+
+  return new Map(items);
+}
+
+const XML_COMMENT_SNIPPET =
+  /(?<open><!--\s*@\{(?<name>[a-z_A-Z0-9$]+)\}\s*-->)(?<value>.*)(?<close><!--\s*\{\/\k<name>\}\s*-->)/gms;

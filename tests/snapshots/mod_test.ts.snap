@@ -6,6 +6,12 @@ snapshot[`commentTemplate > should transform basic content 1`] = `
 And some other content
 `;
 
+snapshot[`commentTemplate > should transform content with multiple lines 1`] = `
+# <!-- ={name} -->a new header<!-- {/name} -->
+
+And some other content
+`;
+
 snapshot[`commentTemplate > should handle multiple transformations 1`] = `
 # <!-- ={name} -->a new header<!-- {/name} -->
 

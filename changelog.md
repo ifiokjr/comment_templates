@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0 - [2022-06-24]
+## 0.1.0 - [2022-06-26]
 
 This is the initial release of the `comment-templates` module.
 
