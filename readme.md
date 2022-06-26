@@ -13,7 +13,7 @@ The solution is to wrap the content you want to replace in a language specific c
 
 ## API
 
-<!-- ={apiDocs} --><table><tr><td width="400px" valign="top">
+<!-- ={apiDocs} -->
 
 ### `commentTemplate`
 
@@ -24,6 +24,8 @@ declare function commentTemplate(props: CommentTemplateProps): string;
 ```
 
 <br />
+
+#### Description
 
 <!-- ={modCommentTemplate|prefix:"\n"|indent:" * "|suffix:"\n * "} -->
 
@@ -70,7 +72,9 @@ The supported pipe arguments are `true`, `false`, `null`, any number `0123456789
 
 **NOTE**: The pipe arguments are not processed with regex and at the moment the regex is timing out when a single pipe is used without arguments. In order to use a single pipe, please provide an argument, even if it is an empty string.
 
-</td><td width="600px"><br />
+<br />
+
+#### Examples
 
 ```ts
 import {
@@ -109,10 +113,6 @@ assertEquals(
 
 <!-- {/modCommentTemplate} -->
 
-</td></tr></table>
-
-<table><tr><td width="400px" valign="top">
-
 ### `CommentTemplateProps`
 
 <br />
@@ -128,6 +128,8 @@ interface CommentTemplateProps {
 ```
 
 <br />
+
+#### Description
 
 These are the props that are passed into the `commentTemplate` function.
 
@@ -158,7 +160,9 @@ The comment patterns to match for the provided content. You can limit the kind o
 
 Return true when you want to exclude a match from being transformed.
 
-</td><td width="600px"><br />
+<br />
+
+#### Examples
 
 **content**
 
@@ -214,10 +218,6 @@ const props: CommentTemplateProps = {
 };
 ```
 
-</td></tr></table>
-
-<table><tr><td width="400px" valign="top">
-
 ### `extractTemplateValues`
 
 <br />
@@ -230,13 +230,17 @@ declare function extractTemplateValues(
 
 <br />
 
+#### Description
+
 <!-- ={modExtractTemplateValues|prefix:"\n"|indent:" * "|suffix:"\n * "} -->
 
 Extract the snippets from the provided content.
 
 This returns each named snippet in a map.
 
-</td><td width="600px"><br />
+<br />
+
+#### Examples
 
 The following example extracts the snippets from the provided content.
 
@@ -252,5 +256,4 @@ const variables = extractTemplateValues(content);
 
 <!-- {/modExtractTemplateValues} -->
 
-</td></tr></table>
 <!-- {/apiDocs}-->

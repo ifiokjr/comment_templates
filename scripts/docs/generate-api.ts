@@ -244,7 +244,6 @@ interface CreateMarkdownEntry {
 function createMarkdownEntry(props: CreateMarkdownEntry): string {
   const { description, examples, name, signature } = props;
   return `\
-<table><tr><td width="400px" valign="top">
 
 ### \`${name}\`
 
@@ -254,12 +253,15 @@ ${signature}
 
 <br />
 
+#### Description
+
 ${description}
 
-</td><td width="600px"><br />
+<br />
+
+#### Examples
 
 ${examples}
 
-</td></tr></table>
 `;
 }
